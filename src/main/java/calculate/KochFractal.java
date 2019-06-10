@@ -4,6 +4,8 @@
  */
 package calculate;
 
+import fun3kochfractalfx.EdgeDrawer;
+import fun3kochfractalfx.EdgeType;
 import javafx.scene.paint.Color;
 
 /**
@@ -11,53 +13,65 @@ import javafx.scene.paint.Color;
  * Modified for FUN3 by Gertjan Schouten
  * Modified for FUN3 by Jordy Stabèl
  */
-public class KochFractal {
+public class KochFractal implements Runnable {
 
     private int level = 1;      // The current level of the fractal
     private int nrOfEdges = 3;  // The number of edges in the current level of the fractal
     private float hue;          // Hue value of color for next edge
     private boolean cancelled;  // Flag to indicate that calculation has been cancelled
-    private KochManager manager;
+    private EdgeType edgeType;  // Type of edge this fractal is
 
-    public KochFractal(KochManager manager) {
-        this.manager = manager;
+    /**
+     * Staring positions
+     */
+    private final double start_ax;
+    private final double start_ay;
+    private final double start_bx;
+    private final double start_by;
+
+    public KochFractal(float hue, double ax, double ay, double bx, double by, EdgeType edgeType) {
+        this.hue = hue;
+        this.start_ax = ax;
+        this.start_ay = ay;
+        this.start_bx = bx;
+        this.start_by = by;
+        this.edgeType = edgeType;
     }
 
-    public void generateLeftEdge() {
-        hue = 0f;
-        cancelled = false;
-        Runnable left = new Task(0.5, 0.0, (1 - Math.sqrt(3.0) / 2.0) / 2, 0.75, level, level, nrOfEdges, manager);
-        new Thread(left).start();
+    private void drawKochEdge(double ax, double ay, double bx, double by, int n) {
+        if (!cancelled) {
+            if (n == 1) {
+                hue = hue + 1.0f / nrOfEdges;
+                Edge edge = new Edge(ax, ay, bx, by, Color.hsb(hue * 360.0, 1.0, 1.0));
+                edgeDrawer.addEdge(edge, edgeType);
+            } else {
+                double angle = Math.PI / 3.0 + Math.atan2(by - ay, bx - ax);
+                double distabdiv3 = Math.sqrt((bx - ax) * (bx - ax) + (by - ay) * (by - ay)) / 3;
+                double cx = Math.cos(angle) * distabdiv3 + (bx - ax) / 3 + ax;
+                double cy = Math.sin(angle) * distabdiv3 + (by - ay) / 3 + ay;
+                final double midabx = (bx - ax) / 3 + ax;
+                final double midaby = (by - ay) / 3 + ay;
+                drawKochEdge(ax, ay, midabx, midaby, n - 1);
+                drawKochEdge(midabx, midaby, cx, cy, n - 1);
+                drawKochEdge(cx, cy, (midabx + bx) / 2, (midaby + by) / 2, n - 1);
+                drawKochEdge((midabx + bx) / 2, (midaby + by) / 2, bx, by, n - 1);
+            }
+        }
     }
 
-    public void generateBottomEdge() {
-        hue = 1f / 3f;
-        cancelled = false;
-        Runnable bottom = new Task((1 - Math.sqrt(3.0) / 2.0) / 2, 0.75, (1 + Math.sqrt(3.0) / 2.0) / 2, 0.75, level, level, nrOfEdges, manager);
-        new Thread(bottom).start();
-    }
-
-    public void generateRightEdge() {
-        hue = 2f / 3f;
-        cancelled = false;
-        Runnable right = new Task((1 + Math.sqrt(3.0) / 2.0) / 2, 0.75, 0.5, 0.0, level, level, nrOfEdges, manager);
-        new Thread(right).start();
-    }
-    
-    public void cancel() {
-        cancelled = true;
-    }
-
-    public void setLevel(int lvl) {
-        level = lvl;
+    public void setLevel(int level) {
+        this.level = level;
         nrOfEdges = (int) (3 * Math.pow(4, level - 1));
     }
 
-    public int getLevel() {
-        return level;
+    private EdgeDrawer edgeDrawer;
+
+    public void setEdgeDrawer(EdgeDrawer edgeDrawer) {
+        this.edgeDrawer = edgeDrawer;
     }
 
-    public int getNrOfEdges() {
-        return nrOfEdges;
+    @Override
+    public void run() {
+        drawKochEdge(start_ax, start_ay, start_bx, start_by, level);
     }
 }
