@@ -1,10 +1,11 @@
 package fun3kochfractalfx;
 
 import calculate.Edge;
+import util.Observer;
 
 import java.util.ArrayList;
 
-public class EdgeDrawer {
+public class EdgeDrawer implements Observer {
 
     private FUN3KochFractalFX application;
     private final ArrayList<Edge> savedEdges;
@@ -28,16 +29,13 @@ public class EdgeDrawer {
                         if (savedEdges.isEmpty()) {
                             savedEdges.wait();
                         }
+                        application.drawEdge(savedEdges);
 
-                        for (Edge edge : savedEdges) {
-                            application.drawEdge(edge);
-                        }
                         savedEdges.clear();
                     }
                 }
             } catch (InterruptedException exception) {
                 isAlive = false;
-                stopDrawThread();
             }
         });
         drawThread.start();
@@ -48,21 +46,20 @@ public class EdgeDrawer {
         try {
             drawThread.join();
         } catch (InterruptedException exception) {
-            System.out.println(exception.getMessage());
+            System.out.println("Error in stopDrawThread (EdgeDrawer)" + exception.getMessage());
         }
     }
 
     public void drawEdges() {
         application.clearKochPanel();
-        for (Edge edge : savedEdges) {
-            application.drawEdge(edge);
-        }
+        application.drawEdge(savedEdges);
     }
 
     public void addEdge(Edge edge, EdgeType edgeType) {
         synchronized (savedEdges) {
             savedEdges.add(edge);
             allEdges.add(edge);
+            // Wakes up waiting thread
             savedEdges.notify();
         }
         application.updateProgressBar(edgeType);
@@ -71,5 +68,11 @@ public class EdgeDrawer {
     public void clearEdges() {
         savedEdges.clear();
         application.clearKochPanel();
+    }
+
+    @Override
+    public void update(Object object) {
+        drawEdges();
+        System.out.println("Update called");
     }
 }

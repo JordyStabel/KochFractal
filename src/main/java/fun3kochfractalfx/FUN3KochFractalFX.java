@@ -18,6 +18,7 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
+import java.util.ArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -46,10 +47,6 @@ public class FUN3KochFractalFX extends Application {
     private Label leftProgressValue;
     private Label rightProgressValue;
     private Label bottomProgressValue;
-
-    // Koch manager
-    // TO DO: Create class KochManager in package calculate
-    private KochManager kochManager;
 
     // Current level of Koch fractal
     private int currentLevel = 1;
@@ -219,8 +216,8 @@ public class FUN3KochFractalFX extends Application {
 
         // Create Koch manager and set initial level
         resetZoom();
-        kochManager = new KochManager(this, currentLevel, edgeDrawer);
-        kochManager.changeLevel(currentLevel);
+
+        changeLevel(currentLevel);
 
         // Create the scene and add the grid pane
         Group root = new Group();
@@ -241,6 +238,9 @@ public class FUN3KochFractalFX extends Application {
             totalEdges = Math.pow(4, nextLevel - 1);
             labelLevel.setText("Level: " + nextLevel);
             KochManager kochManager = new KochManager(this, currentLevel, edgeDrawer);
+            kochManager.subscribe((object) -> {
+                calculationCompleted = true;
+            });
             executor.execute(kochManager);
         }
     }
@@ -282,45 +282,53 @@ public class FUN3KochFractalFX extends Application {
         counter = 0;
     }
 
-    public void drawEdge(Edge e) {
-        // Graphics
+    public void drawEdge(final ArrayList<Edge> edges){
         GraphicsContext gc = kochPanel.getGraphicsContext2D();
+        ArrayList<Edge> copies = new ArrayList<>(edges);
 
-        // Adjust edge for zoom and drag
-        Edge e1 = edgeAfterZoomAndDrag(e);
+        Platform.runLater(() -> {
+            for (Edge e : copies) {
+                Edge e1 = edgeAfterZoomAndDrag(e);
 
-        // Set line color
-        gc.setStroke(e1.color);
+                // Set line color
+                gc.setStroke(e1.color);
+                strokeLine(gc, e1);
+            }
 
+            pbBottom.setProgress( totalBottom.get() / totalEdges);
+            pbLeft.setProgress( totalLeft.get() / totalEdges);
+            pbRight.setProgress( totalRight.get() / totalEdges);
+
+            bottomProgressValue.setText("Nr. edges: "+ totalBottom.get());
+            leftProgressValue.setText("Nr. edges: "+ totalLeft.get());
+            rightProgressValue.setText("Nr. edges: "+ totalRight.get());
+        });
+    }
+
+    private void strokeLine(GraphicsContext gc, Edge e1){
         // Set line width depending on level
         if (currentLevel <= 3) {
             gc.setLineWidth(2.0);
-        } else if (currentLevel <= 5) {
+        }
+        else if (currentLevel <=5 ) {
             gc.setLineWidth(1.5);
-        } else {
+        }
+        else {
             gc.setLineWidth(1.0);
         }
-
-        // Draw line
         gc.strokeLine(e1.X1, e1.Y1, e1.X2, e1.Y2);
-
-        counter++;
-        if (counter >= THRESHOLD) {
-            kochPanel.snapshot(null, image);
-            counter = 0;
-        }
     }
 
     public void setTextNrEdges(String text) {
-        labelNrEdgesText.setText(text);
+        Platform.runLater(() -> labelNrEdgesText.setText(text));
     }
 
     public void setTextCalc(String text) {
-        labelCalcText.setText(text);
+        Platform.runLater(() -> labelCalcText.setText(text));
     }
 
     public void setTextDraw(String text) {
-        labelDrawText.setText(text);
+        Platform.runLater(() -> labelDrawText.setText(text));
     }
 
     private void increaseLevelButtonActionPerformed(ActionEvent event) {
@@ -328,7 +336,7 @@ public class FUN3KochFractalFX extends Application {
             // resetZoom();
             currentLevel++;
             labelLevel.setText("Level: " + currentLevel);
-            kochManager.changeLevel(currentLevel);
+            changeLevel(currentLevel);
         }
     }
 
@@ -337,7 +345,7 @@ public class FUN3KochFractalFX extends Application {
             // resetZoom();
             currentLevel--;
             labelLevel.setText("Level: " + currentLevel);
-            kochManager.changeLevel(currentLevel);
+            changeLevel(currentLevel);
         }
     }
 

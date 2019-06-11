@@ -23,4 +23,9 @@ public class Observable {
             observer.update(object);
         }
     }
+
+    /** Empty call notifyObservers */
+    public void notifyObservers() {
+        notifyObservers(null);
+    }
 }

@@ -11,7 +11,6 @@ import fun3kochfractalfx.EdgeType;
 import fun3kochfractalfx.FUN3KochFractalFX;
 import timeutil.TimeStamp;
 import util.Observable;
-import util.Observer;
 
 /**
  * @author Nico Kuijpers
@@ -23,10 +22,10 @@ public class KochManager extends Observable implements Runnable {
     private FUN3KochFractalFX application;
     private TimeStamp tsCalc;
     private TimeStamp tsDraw;
-    public int EdgeCount;
+    //public int EdgeCount;
     private final int nextLevel;
     private final EdgeDrawer edgeDrawer;
-    
+
     public KochManager(FUN3KochFractalFX application, int nextLevel, EdgeDrawer edgeDrawer) {
         this.application = application;
         this.edgeDrawer = edgeDrawer;
@@ -34,17 +33,17 @@ public class KochManager extends Observable implements Runnable {
         this.tsCalc = new TimeStamp();
         this.tsDraw = new TimeStamp();
     }
-    
-    public void changeLevel(int nxt) {
-        KochFractal left = new KochFractal(0,0.5, 0.0, (1 - Math.sqrt(3.0) / 2.0) / 2, 0.75, EdgeType.LEFT);
+
+    private void changeLevel(int nxt) {
+        KochFractal left = new KochFractal(0, 0.5, 0.0, (1 - Math.sqrt(3.0) / 2.0) / 2, 0.75, EdgeType.LEFT);
         left.setLevel(nxt);
         left.setEdgeDrawer(edgeDrawer);
 
-        KochFractal bottom = new KochFractal(1f / 3f,(1 - Math.sqrt(3.0) / 2.0) / 2, 0.75, (1 + Math.sqrt(3.0) / 2.0) / 2, 0.75, EdgeType.BOTTOM);
+        KochFractal bottom = new KochFractal(1f / 3f, (1 - Math.sqrt(3.0) / 2.0) / 2, 0.75, (1 + Math.sqrt(3.0) / 2.0) / 2, 0.75, EdgeType.BOTTOM);
         bottom.setLevel(nxt);
         bottom.setEdgeDrawer(edgeDrawer);
 
-        KochFractal right = new KochFractal(2f / 3f,(1 + Math.sqrt(3.0) / 2.0) / 2, 0.75, 0.5, 0.0, EdgeType.RIGHT);
+        KochFractal right = new KochFractal(2f / 3f, (1 + Math.sqrt(3.0) / 2.0) / 2, 0.75, 0.5, 0.0, EdgeType.RIGHT);
         right.setLevel(nxt);
         right.setEdgeDrawer(edgeDrawer);
 
@@ -70,6 +69,8 @@ public class KochManager extends Observable implements Runnable {
 
         application.setTextNrEdges("" + (int) (3 * Math.pow(4, nxt - 1)));
         application.setTextCalc(tsCalc.toString());
+
+        notifyObservers();
     }
 
     @Override
