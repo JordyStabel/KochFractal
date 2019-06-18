@@ -17,6 +17,7 @@ import javafx.scene.input.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
+import util.Observable;
 
 import java.util.ArrayList;
 import java.util.concurrent.Executors;

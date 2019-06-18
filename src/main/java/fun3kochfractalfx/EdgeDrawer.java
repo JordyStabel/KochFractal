@@ -1,11 +1,10 @@
 package fun3kochfractalfx;
 
 import calculate.Edge;
-import util.Observer;
 
 import java.util.ArrayList;
 
-public class EdgeDrawer implements Observer {
+public class EdgeDrawer {
 
     private FUN3KochFractalFX application;
     private final ArrayList<Edge> savedEdges;
@@ -52,7 +51,7 @@ public class EdgeDrawer implements Observer {
 
     public void drawEdges() {
         application.clearKochPanel();
-        application.drawEdge(savedEdges);
+        application.drawEdge(allEdges);
     }
 
     public void addEdge(Edge edge, EdgeType edgeType) {
@@ -67,12 +66,7 @@ public class EdgeDrawer implements Observer {
 
     public void clearEdges() {
         savedEdges.clear();
+        allEdges.clear();
         application.clearKochPanel();
-    }
-
-    @Override
-    public void update(Object object) {
-        drawEdges();
-        System.out.println("Update called");
     }
 }
